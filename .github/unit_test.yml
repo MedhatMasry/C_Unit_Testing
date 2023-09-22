@@ -1,0 +1,39 @@
+name: Check Pull Request
+
+on:
+  # Triggers the workflow on pull request events
+  pull_request:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-unit-tests:
+    runs-on:  msys2
+    # matrix strategy for platform targets
+    strategy:
+      matrix:
+        platform: [hcp4_cl04, hcp4_cl05, hcp4_cl06]
+    steps:
+      - name: Checkout Repository and Sub-Modules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+        
+      - name: configure cmake
+        shell: msys2_ghe {0}
+        run: cmake -S . -B build -G "MinGW Makefiles"
+
+      - name: Build Unit Tests
+        shell: msys2_ghe {0}
+        env:
+          MSYSTEM: MINGW64
+        run: |
+          mkdir build
+          cmake --build build
+
+      - name: Execute Unit Tests
+        shell: msys2_ghe {0}
+        env:
+          MSYSTEM: MINGW64
+        run: |
+          ctest --test-dir build
